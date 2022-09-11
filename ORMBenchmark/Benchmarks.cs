@@ -7,6 +7,7 @@ using Npgsql;
 
 namespace ORMBenchmark;
 
+[MemoryDiagnoser]
 public class Benchmarks
 {
     private DbContextOptions<BloggingContext> _options;
@@ -17,7 +18,7 @@ public class Benchmarks
             context.Blogs
                 .Where(b => b.Url.StartsWith("http://"))
                 .Where(b => b.Posts.Count > 3)
-                .Where(b => b.Posts.Any(p => p.Timestamp > DateTime.Now.AddDays(5)))
+                .Where(b => b.Posts.Any(p => p.Timestamp > DateTime.Now.AddDays(5).ToUniversalTime()))
                 .Take(1)
         );
 
@@ -150,7 +151,7 @@ public class Benchmarks
               SELECT 1
               FROM posts AS p0
               WHERE (b.id = p0.blog_id) AND (p0.timestamp > CAST((now()::timestamp + INTERVAL '5 days') AS timestamp with time zone)))
-          LIMIT @__p_0
+          LIMIT 1
       ) AS t
       LIMIT 1
 ";
