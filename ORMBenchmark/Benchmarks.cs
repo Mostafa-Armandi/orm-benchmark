@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using BenchmarkDotNet.Attributes;
 using Benchmarks;
 using Dapper;
@@ -12,17 +13,22 @@ public class Benchmarks
 {
     private DbContextOptions<BloggingContext> _options;
     private PooledDbContextFactory<BloggingContext> _poolingFactory;
+    private PooledDbContextFactory<BloggingContext> _poolingFactoryWithNoTracking;
+
+    private static IQueryable<Blog> GetBaseQuery(BloggingContext context) =>
+        context.Blogs
+            .Where(b => b.Url.StartsWith("http://"))
+            .Where(b => b.Posts.Count > 3)
+            .Where(b => b.Posts.Any(p => p.Timestamp > DateTime.Now.AddDays(5).ToUniversalTime()))
+            .Take(1);
 
     private static readonly Func<BloggingContext, IEnumerable<Blog>> _compiledQuery
-        = EF.CompileQuery((BloggingContext context) =>
-            context.Blogs
-                .Where(b => b.Url.StartsWith("http://"))
-                .Where(b => b.Posts.Count > 3)
-                .Where(b => b.Posts.Any(p => p.Timestamp > DateTime.Now.AddDays(5).ToUniversalTime()))
-                .Take(1)
-        );
+        = EF.CompileQuery((BloggingContext context) => GetBaseQuery(context));
+    
+    private static readonly Func<BloggingContext, IEnumerable<Blog>> _compiledQueryAsNoTracking
+            = EF.CompileQuery((BloggingContext context) => GetBaseQuery(context).AsNoTracking());
 
-    [Params(1, 10)] public int NumBlogs { get; set; }
+    [Params(1, 10, 100)] public int NumBlogs { get; set; }
 
 
     [GlobalSetup]
@@ -40,6 +46,7 @@ public class Benchmarks
         context.SeedDataAsync(NumBlogs);
 
         _poolingFactory = new PooledDbContextFactory<BloggingContext>(_options);
+        _poolingFactoryWithNoTracking = new PooledDbContextFactory<BloggingContext>(_options);
     }
 
 
@@ -97,12 +104,7 @@ public class Benchmarks
     {
         using var context = new BloggingContext(_options);
 
-        return context.Blogs
-            .Where(b => b.Url.StartsWith("http://"))
-            .Where(b => b.Posts.Count > 3)
-            .Where(b => b.Posts.Any(p => p.Timestamp > DateTime.Now.AddDays(5).ToUniversalTime()))
-            .Take(1)
-            .FirstOrDefault();
+        return GetBaseQuery(context).FirstOrDefault();
     }
 
     [Benchmark]
@@ -125,11 +127,9 @@ public class Benchmarks
     [Benchmark]
     public Blog? WithCompiledQueryAndContextPoolingAsNoTracking()
     {
-        using var context = _poolingFactory.CreateDbContext();
+        using var context = _poolingFactoryWithNoTracking.CreateDbContext();
 
         return _compiledQuery(context)
-            .AsQueryable()
-            .AsNoTracking()
             .FirstOrDefault();
     }
 
