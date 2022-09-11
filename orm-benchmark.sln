@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "orm-benchmark", "orm-benchmark\orm-benchmark.csproj", "{D52AB837-ED4A-4F8C-8CC2-E566BA49B519}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ORMBenchmark", "ORMBenchmark\ORMBenchmark.csproj", "{D52AB837-ED4A-4F8C-8CC2-E566BA49B519}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
