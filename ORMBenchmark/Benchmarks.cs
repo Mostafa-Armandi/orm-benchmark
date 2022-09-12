@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using BenchmarkDotNet.Attributes;
 using Benchmarks;
 using Dapper;
@@ -28,7 +27,7 @@ public class Benchmarks
     private static readonly Func<BloggingContext, IEnumerable<Blog>> _compiledQueryAsNoTracking
             = EF.CompileQuery((BloggingContext context) => GetBaseQuery(context).AsNoTracking());
 
-    [Params(1, 10, 100)] public int NumBlogs { get; set; }
+    [Params(10, 100)] public int NumBlogs { get; set; }
 
 
     [GlobalSetup]
