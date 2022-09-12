@@ -3,7 +3,6 @@ services:
 
   benchmark:
     container_name: benchmarks
-    restart: always
     build:
       context: .
       dockerfile: Dockerfile
